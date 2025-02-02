@@ -92,6 +92,7 @@ def load_lottie_url(url):
 keto_kat_animation = load_lottie_url('https://lottie.host/89ed7481-222e-4850-879d-a96471c32534/3hVtb56VQF.json')  # Cat with food
 cbuminator_animation = load_lottie_url('https://lottie.host/0aa94491-176f-4cfd-a7a3-48fdc2cbc844/A3C89do9KL.json')  # Workout theme
 pet_animation = load_lottie_url("https://lottie.host/27b7d9f3-211d-4ce8-b8a3-453d3e2c5439/0YWqdBtdv7.json") # Pet doggo
+shopping_animation = load_lottie_url('https://lottie.host/bb02a444-4aa8-4fea-bd38-d46fae3b0baf/XDdL3IbPh7.json')  # Healthy shopping animation
 
 # Sidebar Navigation
 st.sidebar.title("🚀 MacroMind Menu")
@@ -355,6 +356,71 @@ elif page == "📊 Flexpert":
             st.plotly_chart(fig2)
 
     st.sidebar.info("💡 Stay consistent! Track your workouts and diet to maximize results.")
+
+
+# Shopping Section
+elif page == "🛒 Shopping":
+    st.header("🛒 Smart Grocery Shopping for a Healthier You")
+    st.write("Plan your grocery shopping based on AI-suggested meals and healthier food choices!")
+
+    col1, col2 = st.columns([2, 1])  # Make col1 larger for the table
+    
+    # Animation in Column 2
+    with col2:
+        st_lottie(shopping_animation, height=300, key="shopping_animation")
+
+    with col1:
+        st.write("🥦 **Shop Smart & Stay Healthy!**")
+        st.write("✅ Plan groceries based on AI-generated meal plans.")
+        st.write("✅ Get **better alternatives** for unhealthy items.")
+        st.write("✅ Find the best deals on healthy ingredients.")
+
+        # Smart Shop Button
+        if st.button("🛍 Smart Shop", key="smart_shop", help="Click to generate your shopping checklist with AI recommendations"):
+            with st.spinner("🔄 Generating your AI-powered grocery checklist..."):
+                from shopping import load_meal_plan_log, generate_grocery_list, create_grocery_table
+
+                # Load meal plans
+                meal_plan_log = load_meal_plan_log()
+
+                if not meal_plan_log:
+                    st.warning("⚠ No meal plans found! Generate a meal plan first.")
+                else:
+                    latest_meal_plan = meal_plan_log[-1]["meal_plan"]  # Get the most recent meal plan
+                    grocery_list = generate_grocery_list(latest_meal_plan)
+
+                    if grocery_list.startswith("❌"):
+                        st.error(grocery_list)
+                    else:
+                        grocery_df = create_grocery_table(grocery_list)
+
+                        st.success("✅ Your grocery checklist is ready!")
+
+                        # Full-width table spanning both columns
+                        st.subheader("📝 Your AI-Generated Grocery List")
+                        st.dataframe(grocery_df, width=1000)
+
+                        # Add checkboxes for interactive shopping
+                        checked_items = []
+                        for index, row in grocery_df.iterrows():
+                            checked = st.checkbox(f"{row['Item']}", key=row['Item'])
+                            if checked:
+                                checked_items.append(row['Item'])
+
+                        st.write(f"✅ {len(checked_items)} / {len(grocery_df)} items checked")
+
+                        # Display nutrition facts
+                        st.subheader("🥗 Nutrition Facts for Your Ingredients")
+                        from keto_god import get_nutrition_facts
+                        nutrition_facts = get_nutrition_facts([row['Item'] for _, row in grocery_df.iterrows()])
+                        st.write(nutrition_facts)
+
+                        # Display shopping links
+                        st.subheader("🛍 Shop Your Groceries Online")
+                        for index, row in grocery_df.iterrows():
+                            st.markdown(f"🔗 [Find **{row['Item']}** on Wakefern]({row['Wakefern Link']})")
+
+    st.sidebar.info("💡 AI-powered shopping helps you stay on track with your health goals!")
 
 # Footer for all pages - Centered
 st.markdown("""
