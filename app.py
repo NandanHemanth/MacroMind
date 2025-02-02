@@ -63,12 +63,12 @@ pet_animation = load_lottie_url("https://lottie.host/27b7d9f3-211d-4ce8-b8a3-453
 
 # Sidebar Navigation
 st.sidebar.title("🚀 MacroMind Menu")
-page = st.sidebar.radio("Personal AI Hub", ["🏠 Profile", "🏋️ Cbuminator", "🥗 Keto-Kat", "📊 Flexpert"])
+page = st.sidebar.radio("Personal AI Hub", ["🏠 Profile", "🏋️ Cbuminator", "🥗 Keto-Kat", "📊 Flexpert", "🛒 Shopping"])
 
 # Add a space before pet animation for better positioning
-st.sidebar.markdown("<br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+st.sidebar.markdown("<br>", unsafe_allow_html=True)
 with st.sidebar:
-    st_lottie(pet_animation, height=150, key="keto_pet")
+    st_lottie(pet_animation, height=200, key="keto_pet")
 
 
 # Profile Section
@@ -81,6 +81,7 @@ if page == "🏠 Profile":
         <style>
         .profile-pic {
             display: flex;
+            text-align: center;
             justify-content: center;
         }
         img {
@@ -91,7 +92,7 @@ if page == "🏠 Profile":
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image("./assets/keto_kat.webp", width=150)
+        st.image("./assets/profile_pic.jpg", width=150)
     
     # Load existing data
     name, height, weight, goal, dietary_restriction = load_user_data()
@@ -116,6 +117,9 @@ if page == "🏠 Profile":
     if st.button("💾 Save Profile", key="save_button", help="Click to save your profile", use_container_width=True, type="primary"):
         save_user_data(name, height, weight, goal, dietary_restriction)
         st.success("✅ Your details have been saved!")
+
+    with col2:
+        st.sidebar.info("💡 Fun Fact: You have over 37 trillion cells working together every second to keep you alive—proving that even on your worst days, your body and mind are still fighting for you! 💪🚀")
 
 # AI Trainer - Cbuminator
 elif page == "🏋️ Cbuminator":
@@ -183,6 +187,10 @@ elif page == "🥗 Keto-Kat":
     col1, col2 = st.columns(2)
     
     with col1:
+        st.write("Personalized meal plans, dietary tracking, and health recommendations!")
+        st.write("🍎 Tracks Macros & Calories")
+        st.write("🥑 Suggests Meals Based on Fitness Goals")
+        st.write("💧 Hydration & Supplements Advice")
         # Store detected food items in session state
         if "detected_foods" not in st.session_state:
             st.session_state["detected_foods"] = []
@@ -195,7 +203,7 @@ elif page == "🥗 Keto-Kat":
             with open(image_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
-            st.image(image_path, caption="Uploaded Image", use_column_width=True)
+            st.image(image_path, caption="Uploaded Image", use_container_width=True)
 
             # Recognize food
             st.write("🔍 Recognizing food items...")
@@ -213,17 +221,22 @@ elif page == "🥗 Keto-Kat":
                 # Display Pie Chart
                 st.write("📊 **Nutritional Breakdown**")
                 
-                # Extract macronutrient data
+                # Extract macronutrient data safely
                 macro_data = {"Calories": 0, "Proteins": 0, "Fats": 0, "Carbs": 0}
+
                 for line in nutrition_facts.split("\n"):
-                    if "calories" in line.lower():
-                        macro_data["Calories"] += int("".join(filter(str.isdigit, line)))
-                    elif "protein" in line.lower():
-                        macro_data["Proteins"] += int("".join(filter(str.isdigit, line)))
-                    elif "fat" in line.lower():
-                        macro_data["Fats"] += int("".join(filter(str.isdigit, line)))
-                    elif "carb" in line.lower():
-                        macro_data["Carbs"] += int("".join(filter(str.isdigit, line)))
+                    digits = "".join(filter(str.isdigit, line))  # Extract only digits
+
+                    if digits:  # Check if digits exist before conversion
+                        value = int(digits)
+                        if "calories" in line.lower():
+                            macro_data["Calories"] += value
+                        elif "protein" in line.lower():
+                            macro_data["Proteins"] += value
+                        elif "fat" in line.lower():
+                            macro_data["Fats"] += value
+                        elif "carb" in line.lower():
+                            macro_data["Carbs"] += value
 
                 # Create a pie chart
                 fig, ax = plt.subplots()
