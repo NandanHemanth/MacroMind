@@ -2,8 +2,10 @@ import streamlit as st
 import requests
 import json
 import os
+import subprocess
 import sqlite3
 from streamlit_lottie import st_lottie
+from PIL import Image
 
 # Set page configuration
 st.set_page_config(page_title="MacroMind", page_icon="💪", layout="wide")
@@ -116,11 +118,55 @@ elif page == "🏋️ Cbuminator":
         st.write("✅ Detects Posture & Form")
         st.write("✅ Tracks Reps & Sets")
         st.write("✅ Gives Instant Feedback")
-        if st.button("🔥 Start Training"):
-            st.success("Tracking workout... Get ready! 🏋️‍♂️")
+        
+        # Fitness goals dropdown
+        goals = {
+            "Bulking": "Increase muscle mass with a calorie surplus.",
+            "Cutting": "Reduce body fat while maintaining muscle.",
+            "Lean-Bulk": "Slowly gain muscle while keeping fat gain minimal.",
+            "Maintain": "Keep your current weight and fitness level.",
+            "Flexibility/Mobility": "Enhance movement and flexibility."
+        }
+        selected_goal = st.selectbox("🎯 Select Your Fitness Goal:", list(goals.keys()))
+        st.write(f"📌Current Goal: {goals[selected_goal]}")
+        
+        # Exercise selection dropdowns
+        exercises = ["Bicep Curls", "Squats", "Push-ups", "Deadlifts", "Lunges", "Planks", "Bench Press"]
+        selected_exercise = st.selectbox("🏋️ Select Exercise:", exercises)
+        # exercise_2 = st.selectbox("🏋️ Select Second Exercise:", exercises)
+        
+        # Reps selection dropdown
+        rep_count = st.selectbox("🔢 Select Rep Count:", list(range(2, 21)))
+        
+        if st.button("🔥 Start Training", help="Start your journey", use_container_width=True, type="primary"):
+            st.success(f"Starting {selected_exercise} for {rep_count} reps... Get moving! 🏋️‍♂️")
+
+            # Run AI_Trainer and capture output
+            result = subprocess.run(["python", "AI_God.py", selected_exercise, str(rep_count)], capture_output=True, text=True)
+            
+            for line in result.stdout.split("\n"):
+                if "Score:" in line and "Calories Burned:" in line:
+                    parts = line.split("|")
+                    score = float(parts[0].split("Score:")[1].strip().replace("%", ""))
+                    calories_burned = float(parts[1].split("Calories Burned:")[1].strip())
+
+                    st.write(f"💯 **Your Form Score: {score:.2f}%**")
+                    st.write(f"🔥 **Calories Burned: {calories_burned:.2f} kcal**")
+
+            
+            # Read and display the saved chart
+            st.write("📊 **Your Form VS Cbum's Form**")
+            chart_path = "./database/form_score_chart.png"
+            try:
+                image = Image.open(chart_path)
+                st.image(image, caption="Your Form Analysis", use_container_width=True)
+
+            except Exception as e:
+                st.error("Could not load chart. Make sure AI_Trainer.py ran successfully.")
+
     with col2:
         st_lottie(cbuminator_animation, height=300, key="cbuminator")
-    st.sidebar.info("💡 Pro Tip: Maintaining proper posture during workouts is more important than higher weights for maximum gains 💪🔥")
+    st.sidebar.info("💡 Pro Tip: Ideal rep is 1s-2s push, 1s hold, 4s negative and 1 rest")
 
 # AI Nutritionist - Keto-Kat
 elif page == "🥗 Keto-Kat":
@@ -132,8 +178,18 @@ elif page == "🥗 Keto-Kat":
         st.write("🍎 Tracks Macros & Calories")
         st.write("🥑 Suggests Meals Based on Fitness Goals")
         st.write("💧 Hydration & Supplements Advice")
-        if st.button("🍽 Get Meal Plan"):
+        
+        if st.button("📸 Take a Photo!", help="Snap a picture of your food to analyze its nutrition!", use_container_width=True, type="secondary"):
+            st.success("Opening camera for food analysis... 📷")
+            subprocess.run(["python", "keto_kat.py", "1"])  # Runs keto_kat.py with ID 1
+        
+        if st.button("📡 Scan Barcode", help="Scan a food barcode to get detailed nutrition info!", use_container_width=True, type="secondary"):
+            st.success("Opening barcode scanner... 📡")
+            subprocess.run(["python", "keto_kat.py", "2"])  # Runs keto_kat.py with ID 2
+        
+        if st.button("🍽 Get Meal Plan", help="Home-made Goodness!", use_container_width=True, type="primary"):
             st.success("Fetching your personalized meal plan... 🍕")
+            
     with col2:
         st_lottie(keto_kat_animation, height=300, key="keto_kat")
     st.sidebar.info("💡 Fun Fact: Chewing gum burns about 11 calories per hour, so technically, you can burn off a stick of gum by just chewing for an hour 😆!")

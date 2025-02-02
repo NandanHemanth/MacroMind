@@ -11,6 +11,14 @@ google-api-python-client
 pandas
 matplotlib
 plotly
+pyzbar
+python-dotenv
+openai
+pytesseract
+ultralytics
+torch
+torchvision
+torchaudio
 
 
 
