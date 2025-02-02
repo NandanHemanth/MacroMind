@@ -1,0 +1,81 @@
+[
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 4,
+        "score": 21.0581137830182,
+        "calories": 2.0
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 6,
+        "score": 21.964222839809743,
+        "calories": 3.0,
+        "timestamp": "2025-02-02 08:25:01"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 8,
+        "score": 39.91698214259477,
+        "calories": 4.0,
+        "timestamp": "2025-02-02 08:28:20"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 2,
+        "score": 0.77234079745646,
+        "calories": 1.0,
+        "timestamp": "2025-02-02 08:32:38"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 1,
+        "score": 86.65975605271994,
+        "calories": 0.5,
+        "timestamp": "2025-02-02 08:33:24"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 6,
+        "score": 65.62032420262409,
+        "calories": 3.0,
+        "timestamp": "2025-02-02 08:34:39"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 2,
+        "score": 8.050941822003313,
+        "calories": 1.0,
+        "timestamp": "2025-02-02 08:56:44"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 7,
+        "score": 19.221696082264014,
+        "calories": 3.5,
+        "timestamp": "2025-02-02 08:59:05"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 0,
+        "score": 0,
+        "calories": 0.0,
+        "timestamp": "2025-02-02 09:00:01"
+    },
+    {
+        "exercise_id": 100,
+        "exercise_name": "Bicep Curls",
+        "reps": 3,
+        "score": 13.057894030875717,
+        "calories": 1.5,
+        "timestamp": "2025-02-02 09:00:17"
+    }
+]

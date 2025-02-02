@@ -2,6 +2,7 @@ import os
 import requests
 import base64
 from dotenv import load_dotenv
+import json
 
 # Load API key from .env
 load_dotenv()
@@ -63,6 +64,40 @@ def suggest_recipes(food_items):
         return result["candidates"][0]["content"]["parts"][0]["text"]
     else:
         return "❌ Error fetching recipes."
+    
+def save_meal_data(detected_foods, nutrition_facts, meal_plan):
+    """Saves meal data (detected foods, nutrition, and meals) to a JSON file."""
+    data = {
+        "detected_foods": detected_foods,
+        "nutrition_facts": nutrition_facts,
+        "meal_plan": meal_plan
+    }
+
+    file_path = "./database/meal_data.json"
+    
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    # Load existing data if file exists
+    if os.path.exists(file_path):
+        with open(file_path, "r") as file:
+            try:
+                existing_data = json.load(file)
+                if not isinstance(existing_data, list):
+                    existing_data = []
+            except json.JSONDecodeError:
+                existing_data = []
+    else:
+        existing_data = []
+
+    # Append new meal data
+    existing_data.append(data)
+
+    # Save back to file
+    with open(file_path, "w") as file:
+        json.dump(existing_data, file, indent=4)
+
+    print("✅ Meal data saved successfully!")
 
 # Testing with the Fridge pic
 # def main(image_path):

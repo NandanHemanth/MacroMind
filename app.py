@@ -1,4 +1,8 @@
 import streamlit as st
+
+# Set page configuration
+st.set_page_config(page_title="MacroMind", page_icon="💪", layout="wide")
+
 import requests
 import json
 import os
@@ -6,48 +10,76 @@ import subprocess
 import sqlite3
 from streamlit_lottie import st_lottie
 from PIL import Image
-from keto_god import recognize_food, get_nutrition_facts, suggest_recipes
+from keto_god import recognize_food, get_nutrition_facts, suggest_recipes, save_meal_data
 import matplotlib.pyplot as plt
+import json
+import plotly.express as px
+# Import functions from flexpert_analytics
+from flexpert_analytics import (
+    load_json_data,
+    load_sqlite_data,
+    fetch_meal_plan
+)
 
-# Set page configuration
-st.set_page_config(page_title="MacroMind", page_icon="💪", layout="wide")
+# # Set page configuration
+# st.set_page_config(page_title="MacroMind", page_icon="💪", layout="wide")
 
 # Database setup
-DB_PATH = "./database/user_data.db"
+USER_DATA_PATH = "./database/user_data.json"
+EXERCISE_LOG_PATH = "./database/exercise_log.json"
+MEAL_PLAN_LOG_PATH = "./database/meal_plan_log.json"
+DB_PATH = "./database/user_exercises.db"
 
-def init_db():
-    if not os.path.exists("./database"):
-        os.makedirs("./database")
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS user_profile (
-                        id INTEGER PRIMARY KEY,
-                        name TEXT,
-                        height INTEGER,
-                        weight INTEGER,
-                        goal TEXT,
-                        dietary_restriction TEXT)''')
-    conn.commit()
-    conn.close()
+def init_user_data():
+    """Initialize the user data file if it doesn't exist."""
+    os.makedirs(os.path.dirname(USER_DATA_PATH), exist_ok=True)
+    
+    if not os.path.exists(USER_DATA_PATH):
+        default_data = {
+            "name": "",
+            "height": 170,
+            "weight": 70,
+            "goal": "",
+            "dietary_restriction": ""
+        }
+        with open(USER_DATA_PATH, "w") as file:
+            json.dump(default_data, file, indent=4)
 
 def save_user_data(name, height, weight, goal, dietary_restriction):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''INSERT OR REPLACE INTO user_profile (id, name, height, weight, goal, dietary_restriction) 
-                      VALUES (1, ?, ?, ?, ?, ?)''', (name, height, weight, goal, dietary_restriction))
-    conn.commit()
-    conn.close()
+    """Saves user data in a JSON file."""
+    data = {
+        "name": name,
+        "height": height,
+        "weight": weight,
+        "goal": goal,
+        "dietary_restriction": dietary_restriction
+    }
+
+    with open(USER_DATA_PATH, "w") as file:
+        json.dump(data, file, indent=4)
+
+    print("✅ User data saved successfully!")
 
 def load_user_data():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT name, height, weight, goal, dietary_restriction FROM user_profile WHERE id=1")
-    data = cursor.fetchone()
-    conn.close()
-    return data if data else ("", 170, 70, "", "")
+    """Loads user data from the JSON file."""
+    if os.path.exists(USER_DATA_PATH):
+        with open(USER_DATA_PATH, "r") as file:
+            try:
+                data = json.load(file)
+                return (
+                    data.get("name", ""),
+                    data.get("height", 170),
+                    data.get("weight", 70),
+                    data.get("goal", ""),
+                    data.get("dietary_restriction", "")
+                )
+            except json.JSONDecodeError:
+                print("❌ Error reading user data. Resetting to default values.")
+                init_user_data()
+    return ("", 170, 70, "", "")
 
-# Initialize Database
-init_db()
+# Initialize User Data
+init_user_data()
 
 # Function to load Lottie animations from a URL
 def load_lottie_url(url):
@@ -141,12 +173,11 @@ elif page == "🏋️ Cbuminator":
             "Flexibility/Mobility": "Enhance movement and flexibility."
         }
         selected_goal = st.selectbox("🎯 Select Your Fitness Goal:", list(goals.keys()))
-        st.write(f"📌Current Goal: {goals[selected_goal]}")
+        st.write(f"📌 Current Goal: {goals[selected_goal]}")
         
         # Exercise selection dropdowns
         exercises = ["Bicep Curls", "Yoga", "Pilates", "Squats", "Push-ups", "Deadlifts", "Lunges", "Planks", "Bench Press"]
         selected_exercise = st.selectbox("🏋️ Select Exercise:", exercises)
-        # exercise_2 = st.selectbox("🏋️ Select Second Exercise:", exercises)
         
         # Reps selection dropdown
         rep_count = st.selectbox("🔢 Select Rep Count:", list(range(2, 21)))
@@ -154,32 +185,39 @@ elif page == "🏋️ Cbuminator":
         if st.button("🔥 Start Training", help="Start your journey", use_container_width=True, type="primary"):
             st.success(f"Starting {selected_exercise} for {rep_count} reps... Get moving! 🏋️‍♂️")
 
-            # Run AI_Trainer and capture output
+            # Run AI_God.py and capture output
             result = subprocess.run(["python", "AI_God.py", selected_exercise, str(rep_count)], capture_output=True, text=True)
             
+            # Extract relevant data from output
+            score, calories_burned = None, None
             for line in result.stdout.split("\n"):
                 if "Score:" in line and "Calories Burned:" in line:
                     parts = line.split("|")
-                    score = float(parts[0].split("Score:")[1].strip().replace("%", ""))
-                    calories_burned = float(parts[1].split("Calories Burned:")[1].strip())
+                    try:
+                        score = float(parts[0].split("Score:")[1].strip().replace("%", ""))
+                        calories_burned = float(parts[1].split("Calories Burned:")[1].strip())
+                    except (IndexError, ValueError):
+                        st.error("Error parsing workout data. Please try again.")
 
-                    st.write(f"💯 **Your Form Score: {score:.2f}%**")
-                    st.write(f"🔥 **Calories Burned: {calories_burned:.2f} kcal**")
+            # Display results
+            if score is not None and calories_burned is not None:
+                st.write(f"💯 **Your Form Score: {score:.2f}%**")
+                st.write(f"🔥 **Calories Burned: {calories_burned:.2f} kcal**")
 
+            # Display Form Score Chart
             with col2:
-                # Read and display the saved chart
                 st.write("📊 **Your Form VS Cbum's Form**")
                 chart_path = "./database/form_score_chart.png"
                 try:
                     image = Image.open(chart_path)
                     st.image(image, caption="Your Form Analysis", use_container_width=True)
-
-                except Exception as e:
-                    st.error("Could not load chart. Make sure AI_Trainer.py ran successfully.")
+                except Exception:
+                    st.error("⚠ Could not load chart. Make sure AI_God.py ran successfully.")
 
     with col2:
         st_lottie(cbuminator_animation, height=300, key="cbuminator")
-    st.sidebar.info("💡 Pro Tip: Ideal rep is 1s-2s push, 1s hold, 4s negative and 1 rest")
+    
+    st.sidebar.info("💡 Pro Tip: Ideal rep is 1s-2s push, 1s hold, 4s negative and 1s rest.")
 
 # AI Nutritionist - Keto-Kat
 elif page == "🥗 Keto-Kat":
@@ -257,6 +295,12 @@ elif page == "🥗 Keto-Kat":
                 st.write("🍳 **Generating Meal Plan based on detected ingredients...**")
                 meal_plan = suggest_recipes(st.session_state["detected_foods"])
                 st.write(meal_plan)
+            # Save the generated meal data
+            save_meal_data(
+                detected_foods=st.session_state["detected_foods"],
+                nutrition_facts=get_nutrition_facts(st.session_state["detected_foods"]),
+                meal_plan=meal_plan
+            )
             
     with col2:
         st_lottie(keto_kat_animation, height=300, key="keto_kat")
@@ -265,12 +309,52 @@ elif page == "🥗 Keto-Kat":
 # Flexpert - Fitness Analytics
 elif page == "📊 Flexpert":
     st.header("📊 Your Fitness Journey with Flexpert")
+
     st.write("Track your **progress** and stay motivated! 📈")
     st.write("🔥 Calories Burned Today: **450 kcal**")
-    st.write("🎯 Steps Taken: **8,230 steps**")
+    st.write("🎯 Steps Taken: **1230 steps**")
     st.write("🏋️‍♂️ Workout Completed: **45 mins**")
-    st.progress(85)
-    st.sidebar.info("💡 Pro Tip: It takes 21 days to build a habit, but it takes 90 days to build a lifestyle!")
+
+    st.progress(35)  # Fitness Goal Completion Bar
+
+    # Load user data
+    exercise_log = load_json_data(EXERCISE_LOG_PATH)
+    user_data = load_json_data(USER_DATA_PATH)
+    exercise_df = load_sqlite_data()    
+
+    # Extract user details
+    fitness_goal = user_data.get("goal", "Maintain")
+    detected_foods = [log["exercise_name"] for log in exercise_log]
+
+    if st.button("📋 Give me my complete plan"):
+        with st.spinner("🔄 Generating your complete plan... Please wait!"):
+            # Fetch AI-generated meal plan
+            meal_plan = fetch_meal_plan(detected_foods, fitness_goal)
+            
+            # # Generate workout streak calendar
+            # workout_dates = [log["timestamp"].split(" ")[0] for log in exercise_log]
+            # streak_calendar = generate_calendar(workout_dates)
+
+            st.success("✅ Your complete plan is ready!")
+
+            # Display meal plan
+            st.subheader("🍽 Customized Meal Plan")
+            st.write(meal_plan)
+
+            # Display workout streak calendar
+            st.subheader("📅 Workout Streaks")
+            # st.text(streak_calendar)
+
+            # Display analytics charts
+            st.subheader("📊 Workout Performance")
+
+            fig1 = px.bar(exercise_df, x="timestamp", y="calories", color="exercise_name", title="Calories Burned Over Time")
+            st.plotly_chart(fig1)
+
+            fig2 = px.line(exercise_df, x="timestamp", y="score", color="exercise_name", title="Workout Form Scores Over Time")
+            st.plotly_chart(fig2)
+
+    st.sidebar.info("💡 Stay consistent! Track your workouts and diet to maximize results.")
 
 # Footer for all pages - Centered
 st.markdown("""

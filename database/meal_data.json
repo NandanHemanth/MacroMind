@@ -1,0 +1,12 @@
+[
+    {
+        "detected_foods": [],
+        "nutrition_facts": "Please provide the list of food items you'd like nutrition facts for.  I need the specific names of the foods (e.g., \"plain yogurt,\" \"1 cup cooked brown rice,\" \"one large apple\") to give you accurate information.  Be as specific as possible, including brand names if relevant (nutrition facts can vary between brands and preparation methods).\n",
+        "meal_plan": "Please provide the ingredients you have available. I need a list of ingredients to suggest recipes.\n"
+    },
+    {
+        "detected_foods": [],
+        "nutrition_facts": "Please provide the list of food items you'd like nutrition facts for.  I need the names of the foods to give you the information.  Be as specific as possible (e.g., \"1 cup of cooked brown rice\" instead of just \"rice\").  The more detail you provide, the more accurate my response will be.\n",
+        "meal_plan": "Please provide the ingredients you have! I need a list of ingredients to suggest recipes.\n"
+    }
+]

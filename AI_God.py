@@ -6,6 +6,7 @@ import time
 import sys
 import sqlite3
 import matplotlib.pyplot as plt
+import json
 
 # Get exercise and rep count from command-line arguments
 if len(sys.argv) < 3:
@@ -14,9 +15,6 @@ if len(sys.argv) < 3:
 
 exercise_name = sys.argv[1]
 rep_count = int(sys.argv[2])
-
-# exercise_name = "Bicep Curls"
-# rep_count = 2
 
 # Database Setup
 def init_db():
