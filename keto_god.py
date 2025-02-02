@@ -7,16 +7,16 @@ from dotenv import load_dotenv
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Updated Gemini API Endpoint (Using gemini-1.5-flash)
+# Updated Gemini API Endpoint
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 def encode_image(image_path):
-    """Encodes image to Base64 for API request."""
+    """Encodes an image to Base64 for API request."""
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 def recognize_food(image_path):
-    """Sends image to Gemini AI and returns detected food items."""
+    """Recognizes food items in an image using Gemini AI."""
     image_base64 = encode_image(image_path)
     
     headers = {"Content-Type": "application/json"}
@@ -36,7 +36,6 @@ def recognize_food(image_path):
         detected_foods = result["candidates"][0]["content"]["parts"][0]["text"]
         return detected_foods.split(", ")  # Convert string to list
     else:
-        print("❌ Error recognizing food:", response.json())
         return []
 
 def get_nutrition_facts(food_items):
@@ -65,25 +64,26 @@ def suggest_recipes(food_items):
     else:
         return "❌ Error fetching recipes."
 
-def main(image_path):
-    print("📸 Recognizing food items...")
-    food_items = recognize_food(image_path)
+# Testing with the Fridge pic
+# def main(image_path):
+#     print("📸 Recognizing food items...")
+#     food_items = recognize_food(image_path)
     
-    if not food_items:
-        print("⚠ No food items detected!")
-        return
+#     if not food_items:
+#         print("⚠ No food items detected!")
+#         return
 
-    print(f"✅ Detected Food Items: {', '.join(food_items)}")
+#     print(f"✅ Detected Food Items: {', '.join(food_items)}")
     
-    print("\n📊 Fetching Nutrition Facts...")
-    nutrition_facts = get_nutrition_facts(food_items)
-    print(nutrition_facts)
+#     print("\n📊 Fetching Nutrition Facts...")
+#     nutrition_facts = get_nutrition_facts(food_items)
+#     print(nutrition_facts)
 
-    print("\n🍽 Suggesting Recipes...")
-    recipes = suggest_recipes(food_items)
-    print(recipes)
+#     print("\n🍽 Suggesting Recipes...")
+#     recipes = suggest_recipes(food_items)
+#     print(recipes)
 
-# Run the script with your image file
-if __name__ == "__main__":
-    image_path = "./test.jpg"  # Change this to your image path
-    main(image_path)
+# # Run the script with your image file
+# if __name__ == "__main__":
+#     image_path = "./fridge.jpg"  # Change this to your image path
+#     main(image_path)

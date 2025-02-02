@@ -6,6 +6,8 @@ import subprocess
 import sqlite3
 from streamlit_lottie import st_lottie
 from PIL import Image
+from keto_god import recognize_food, get_nutrition_facts, suggest_recipes
+import matplotlib.pyplot as plt
 
 # Set page configuration
 st.set_page_config(page_title="MacroMind", page_icon="💪", layout="wide")
@@ -57,10 +59,17 @@ def load_lottie_url(url):
 # Load animations from URLs
 keto_kat_animation = load_lottie_url('https://lottie.host/89ed7481-222e-4850-879d-a96471c32534/3hVtb56VQF.json')  # Cat with food
 cbuminator_animation = load_lottie_url('https://lottie.host/0aa94491-176f-4cfd-a7a3-48fdc2cbc844/A3C89do9KL.json')  # Workout theme
+pet_animation = load_lottie_url("https://lottie.host/27b7d9f3-211d-4ce8-b8a3-453d3e2c5439/0YWqdBtdv7.json") # Pet doggo
 
 # Sidebar Navigation
 st.sidebar.title("🚀 MacroMind Menu")
 page = st.sidebar.radio("Personal AI Hub", ["🏠 Profile", "🏋️ Cbuminator", "🥗 Keto-Kat", "📊 Flexpert"])
+
+# Add a space before pet animation for better positioning
+st.sidebar.markdown("<br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+with st.sidebar:
+    st_lottie(pet_animation, height=150, key="keto_pet")
+
 
 # Profile Section
 if page == "🏠 Profile":
@@ -131,7 +140,7 @@ elif page == "🏋️ Cbuminator":
         st.write(f"📌Current Goal: {goals[selected_goal]}")
         
         # Exercise selection dropdowns
-        exercises = ["Bicep Curls", "Squats", "Push-ups", "Deadlifts", "Lunges", "Planks", "Bench Press"]
+        exercises = ["Bicep Curls", "Yoga", "Pilates", "Squats", "Push-ups", "Deadlifts", "Lunges", "Planks", "Bench Press"]
         selected_exercise = st.selectbox("🏋️ Select Exercise:", exercises)
         # exercise_2 = st.selectbox("🏋️ Select Second Exercise:", exercises)
         
@@ -153,16 +162,16 @@ elif page == "🏋️ Cbuminator":
                     st.write(f"💯 **Your Form Score: {score:.2f}%**")
                     st.write(f"🔥 **Calories Burned: {calories_burned:.2f} kcal**")
 
-            
-            # Read and display the saved chart
-            st.write("📊 **Your Form VS Cbum's Form**")
-            chart_path = "./database/form_score_chart.png"
-            try:
-                image = Image.open(chart_path)
-                st.image(image, caption="Your Form Analysis", use_container_width=True)
+            with col2:
+                # Read and display the saved chart
+                st.write("📊 **Your Form VS Cbum's Form**")
+                chart_path = "./database/form_score_chart.png"
+                try:
+                    image = Image.open(chart_path)
+                    st.image(image, caption="Your Form Analysis", use_container_width=True)
 
-            except Exception as e:
-                st.error("Could not load chart. Make sure AI_Trainer.py ran successfully.")
+                except Exception as e:
+                    st.error("Could not load chart. Make sure AI_Trainer.py ran successfully.")
 
     with col2:
         st_lottie(cbuminator_animation, height=300, key="cbuminator")
@@ -174,21 +183,67 @@ elif page == "🥗 Keto-Kat":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("Personalized meal plans, dietary tracking, and health recommendations!")
-        st.write("🍎 Tracks Macros & Calories")
-        st.write("🥑 Suggests Meals Based on Fitness Goals")
-        st.write("💧 Hydration & Supplements Advice")
-        
-        if st.button("📸 Take a Photo!", help="Snap a picture of your food to analyze its nutrition!", use_container_width=True, type="secondary"):
-            st.success("Opening camera for food analysis... 📷")
-            subprocess.run(["python", "keto_kat.py", "1"])  # Runs keto_kat.py with ID 1
-        
-        if st.button("📡 Scan Barcode", help="Scan a food barcode to get detailed nutrition info!", use_container_width=True, type="secondary"):
-            st.success("Opening barcode scanner... 📡")
-            subprocess.run(["python", "keto_kat.py", "2"])  # Runs keto_kat.py with ID 2
-        
-        if st.button("🍽 Get Meal Plan", help="Home-made Goodness!", use_container_width=True, type="primary"):
-            st.success("Fetching your personalized meal plan... 🍕")
+        # Store detected food items in session state
+        if "detected_foods" not in st.session_state:
+            st.session_state["detected_foods"] = []
+
+        # Upload Image for Food Recognition
+        uploaded_file = st.file_uploader("📸 Upload a food image", type=["jpg", "jpeg", "png"])
+
+        if uploaded_file:
+            image_path = "./database/uploaded_food.jpg"
+            with open(image_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            st.image(image_path, caption="Uploaded Image", use_column_width=True)
+
+            # Recognize food
+            st.write("🔍 Recognizing food items...")
+            detected_foods = recognize_food(image_path)
+            
+            if detected_foods:
+                st.session_state["detected_foods"].extend(detected_foods)
+                st.success(f"✅ Detected Food Items: {', '.join(detected_foods)}")
+                
+                # Fetch Nutrition Facts
+                st.write("📊 Fetching Nutrition Facts...")
+                nutrition_facts = get_nutrition_facts(detected_foods)
+                st.write(nutrition_facts)
+
+                # Display Pie Chart
+                st.write("📊 **Nutritional Breakdown**")
+                
+                # Extract macronutrient data
+                macro_data = {"Calories": 0, "Proteins": 0, "Fats": 0, "Carbs": 0}
+                for line in nutrition_facts.split("\n"):
+                    if "calories" in line.lower():
+                        macro_data["Calories"] += int("".join(filter(str.isdigit, line)))
+                    elif "protein" in line.lower():
+                        macro_data["Proteins"] += int("".join(filter(str.isdigit, line)))
+                    elif "fat" in line.lower():
+                        macro_data["Fats"] += int("".join(filter(str.isdigit, line)))
+                    elif "carb" in line.lower():
+                        macro_data["Carbs"] += int("".join(filter(str.isdigit, line)))
+
+                # Create a pie chart
+                fig, ax = plt.subplots()
+                ax.pie(macro_data.values(), labels=macro_data.keys(), autopct='%1.1f%%', startangle=140)
+                ax.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+                # Show pie chart in Streamlit
+                st.pyplot(fig)
+
+            else:
+                st.error("⚠ No food items detected. Try another image.")
+
+        # Get Meal Plan Button
+        if st.button("🍽 Get Meal Plan"):
+            if not st.session_state["detected_foods"]:
+                st.error("⚠ No detected food items! Please upload a food image first.")
+            else:
+                st.write("🍳 **Generating Meal Plan based on detected ingredients...**")
+                meal_plan = suggest_recipes(st.session_state["detected_foods"])
+                st.write(meal_plan)
             
     with col2:
         st_lottie(keto_kat_animation, height=300, key="keto_kat")

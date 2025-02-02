@@ -85,5 +85,5 @@ def main(image_path):
 
 # Run the script with your image file
 if __name__ == "__main__":
-    image_path = "./test.jpg"  # Change this to your image path
+    image_path = "./fridge.jpg"  # Change this to your image path
     main(image_path)
